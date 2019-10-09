@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'assets.css' %}">
+{% endblock %}
+
+{# 页面标题 #}
+{% block title %}
+    {{ group_name }}
+{% endblock %}
+
+{# 页面内容 #}
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-md-10">
+                <h3>{{ group_name }}</h3>
+                <ul class="host-description">
+                    {% for inventory in inventorys %}
+                        <li>host: {{ inventory.host }}</li>
+                    {% empty %}
+                        <p>暂无资产，请先添加</p>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+

@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+{% block title %}
+    ansible|首页
+{% endblock %}
+{% load staticfiles %}
+
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'home.css' %}">
+{% endblock %}
+
+{% block content %}
+    <ul>
+        {% for key,value in display %}
+            <li>{{ key }}</li>
+            <li>{{ value }}</li>
+        {% empty %}
+            <p>暂无主机组分组信息</p>
+        {% endfor %}
+    </ul>
+
+{% endblock %}
