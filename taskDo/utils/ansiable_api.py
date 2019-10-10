@@ -1,8 +1,8 @@
 __author__ = 'yuanshuai'
 
 from django.conf import settings
-from assets.models import Inventory
-from ansible import constants
+from ansible.inventory.host import Host
+from ansible.inventory.group import Group
 import ansible.constants as C
 from ansible import context
 from ansible.parsing.dataloader import DataLoader
@@ -26,23 +26,52 @@ class MyInventory:
         self.loader = DataLoader()
         self.inventory = InventoryManager(loader=self.loader, sources=['%s/inventorys' % settings.BASE_DIR])
         self.variable_manager = VariableManager(loader=self.loader, inventory=self.inventory)
-        self.add_dynamic_group()
+        self.dynamic_inventory()
 
-    def add_dynamic_group(self):
+    def add_dynamic_group(self, hosts, groupname, groupvars=None):
         """
             add hosts to a group
         """
-        if not isinstance(self.resource, dict):
-            return False
-        group_name = self.resource['group_name']
-        # 组名存在默认不再添加
-        self.inventory.add_group(group_name)
-        hosts = str(self.resource['hosts']).split(',')
-        host_port = self.resource['port']
-        # add host to group
+        self.inventory.add_group(groupname)
+        my_group = Group(name=groupname)
+
+        # if group variables exists, add them to group
+        if groupvars:
+            for key, value in groupvars.iteritems():
+                my_group.set_variable(key, value)
+
+        # add hosts to group
         for host in hosts:
+            # set connection variables
+            hostname = host.get("hostname")
+            hostip = host.get('ip', hostname)
+            hostport = host.get("port")
+            user = host.get("user")
+            password = host.get("password")
+            ssh_key = host.get("ssh_key")
+            my_host = Host(name=hostname, port=hostport)
+            self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_host', value=hostip)
+            self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_pass', value=password)
+            self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_port', value=hostport)
+            self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_user', value=user)
+            self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_private_key_file', value=ssh_key)
+            # set other variables
+            for key, value in host.iteritems():
+                if key not in ["hostname", "port", "username", "password"]:
+                    self.variable_manager.set_host_variable(host=my_host, varname=key, value=value)
+
             # add to group
-            self.inventory.add_host(host=host, group=group_name, port=host_port)
+            self.inventory.add_host(host=hostname, group=groupname, port=hostport)
+
+    def dynamic_inventory(self):
+        """
+            add hosts to inventory.
+        """
+        if isinstance(self.resource, list):
+            self.add_dynamic_group(self.resource, 'default_group')
+        elif isinstance(self.resource, dict):
+            for groupname, hosts_and_vars in self.resource.iteritems():
+                self.add_dynamic_group(hosts_and_vars.get("hosts"), groupname, hosts_and_vars.get("vars"))
 
 
 class ModelResultsCollector(CallbackBase):
@@ -115,6 +144,9 @@ class ANSRunner:
 
     def __initialize_data(self):
         """ 初始化ansible """
+        user = self.resource['user', 'root']
+        conn_password = self.resource['conn_password']
+        # become_password = self.resource['become_password']
         context.CLIARGS = ImmutableDict(listtags=False, listtasks=False,
                                         listhosts=False, syntax=False,
                                         connection="ssh", module_path=None,
@@ -123,9 +155,10 @@ class ANSRunner:
                                         sftp_extra_args=None, scp_extra_args=None,
                                         become=False, become_method=None,
                                         become_user=None, start_at_task=None,
-                                        verbosity=0, check=False)
+                                        verbosity=0, check=False,
+                                        remote_user=user)
         self.loader = DataLoader()
-        self.passwords = dict()
+        self.passwords = dict(conn_pass=conn_password)
         my_inventory = MyInventory(self.resource)
         self.inventory = my_inventory.inventory
         self.variable_manager = my_inventory.variable_manager
@@ -178,7 +211,7 @@ class ANSRunner:
                 loader=self.loader, passwords=self.passwords,
             )
             executor._tqm._stdout_callback = self.callback
-            constants.HOST_KEY_CHECKING = False
+            C.HOST_KEY_CHECKING = False
             executor.run()
         except Exception as err:
             print(err)

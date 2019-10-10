@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'assets.css' %}">
+{% endblock %}
+
+{# 页面标题 #}
+{% block title %}
+    ansible|{{ group_name }}
+{% endblock %}
+
+{# 页面内容 #}
+{% block content %}
+    <div class="containter">
+        <div class="row">
+            <div class="col-md-3 offset-md-4">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h3 class="panel-title" style="align-content: center;">添加资产</h3>
+                    </div>
+                    <div class="panel-body">
+                        <form action="{% url 'asset' group_id %}" method="POST">
+                            {% csrf_token %}
+                            {% for field in asset_form %}
+                                <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+                                {{ field }}
+                                <p class="text-danger">{{ field.errors.as_text }}</p>
+                            {% endfor %}
+                            <span class="pull-left text-danger">{{ reg_form.non_field_errors }}</span>
+                            <input type="submit" value="提交" class="btn btn-primary pull-right">
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+

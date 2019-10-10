@@ -2,7 +2,7 @@
 {% load staticfiles %}
 
 {% block title %}
-    ansible|首页
+    ansible|资产(首页)
 {% endblock %}
 {% load staticfiles %}
 
@@ -11,13 +11,38 @@
 {% endblock %}
 
 {% block content %}
-    <ul>
-        {% for key,value in display %}
-            <li>{{ key }}</li>
-            <li>{{ value }}</li>
-        {% empty %}
-            <p>暂无主机组分组信息</p>
-        {% endfor %}
-    </ul>
-
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12　col-sm-8　col-md-9 col-lg-9">
+                <div class="panel-heading">
+                    <h3>Groups</h3>
+                </div>
+                <div class="panel-body">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>GroupId</th>
+                            <th>GroupName</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for key,value in display %}
+                            <tr>
+                                <td>{{ key }}</td>
+                                <td>{{ value }}</td>
+                                <td>
+                                    <a href="{% url 'asset_detail' key %}" >查看详情</a>
+                                    <a href="{% url 'asset' key %}" style="margin-left: 2em;">添加host</a>
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <p>暂无主机组分组信息</p>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
 {% endblock %}

@@ -3,14 +3,12 @@ from django import forms
 
 
 class AssetsForm(forms.Form):
-    group_id = forms.IntegerField(widget=forms.HiddenInput)
-    group_name = forms.CharField(widget=forms.HiddenInput)
     hosts = forms.CharField(label="hosts", widget=forms.TextInput(
-        attrs={"class": 'form-controller', 'placeholder': '请输入hosts，多个host请用逗号分隔开'}))
-    port = forms.IntegerField(label='port', initial=22, widget=forms.NumberInput(
-        attrs={'class': 'form-controller', 'placeholder': '请输入端口号[22-65535]整数)'}))
-    user = forms.CharField(label="user", initial="root", widget=forms.TextInput(
-        attrs={'class': 'form-controller', 'placeholder': '请输入ssh连接用户'}))
+        attrs={"class": 'form-control', 'placeholder': '请输入hosts，多个host请用逗号分隔开'}))
+    port = forms.IntegerField(label='port', widget=forms.NumberInput(
+        attrs={'class': 'form-control', 'placeholder': '请输入端口号[22-65535]整数)'}))
+    user = forms.CharField(label="user", widget=forms.TextInput(
+        attrs={'class': 'form-control', 'placeholder': '请输入ssh连接用户'}))
     password = forms.CharField(label='password', widget=forms.PasswordInput(
         attrs={'class': 'form-control', 'placeholder': '请输入ssh连接密码'}))
 
