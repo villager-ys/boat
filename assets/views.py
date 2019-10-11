@@ -1,38 +1,40 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.contrib import messages
 from .models import Inventory
 from .forms import AssetsForm
 from .utils.authentication import ssh_authentication
-from taskDo.utils.ansiable_api import MyInventory
 
 
 def assets(request, group_id):
     # get方法,请求资产表单,post方法,获取表单内容
     if request.method == "POST":
-        assets_form = AssetsForm(request.POST)
-        if assets_form.is_valid():
+        asset_form = AssetsForm(request.POST)
+        if asset_form.is_valid():
             # 数据校验通过，数据写入数据库同时写入文件中
-            hosts = assets_form.cleaned_data['hosts']
-            port = assets_form.cleaned_data['port']
-            user = assets_form.cleaned_data['user']
-            password = assets_form.cleaned_data['password']
+            hosts = asset_form.cleaned_data['hosts']
+            port = asset_form.cleaned_data['port']
+            user = asset_form.cleaned_data['user']
+            password = asset_form.cleaned_data['password']
             host_list = hosts.split(',')
             for host in host_list:
-                # inventory = Inventory()
-                # inventory.host = host
-                # inventory.password = password
-                # inventory.port = port
-                # inventory.user = user
-                # inventory.group = group_id
-                # inventory.save()
-                # 做免密处理
-                result = ssh_authentication(host, port, user, password, group_by_id(group_id))
-                # TODO 判断免密处理是否成功
-            return redirect(reverse('home'))
+                # 做免密处理,判断免密是否成功，不成功
+                result = ssh_authentication(host, port, user, password)
+                if result is None:
+                    inventory = Inventory()
+                    inventory.host = host
+                    inventory.password = password
+                    inventory.port = port
+                    inventory.user = user
+                    inventory.group = group_id
+                    inventory.save()
+                    return redirect(reverse('home'))
+                else:
+                    messages.error(request, result)
     else:
         asset_form = AssetsForm()
-        content = {"asset_form": asset_form, "group_id": group_id}
-        return render(request, "inventory_form.html", content)
+    content = {"asset_form": asset_form, "group_id": group_id}
+    return render(request, "inventory_form.html", content)
 
 
 def asset_detail(request, group_id):

@@ -24,7 +24,7 @@ class MyInventory:
     def __init__(self, resources):
         self.resource = resources
         self.loader = DataLoader()
-        self.inventory = InventoryManager(loader=self.loader, sources=['%s/inventorys' % settings.BASE_DIR])
+        self.inventory = InventoryManager(loader=self.loader, sources=['%s/conf/inventorys' % settings.BASE_DIR])
         self.variable_manager = VariableManager(loader=self.loader, inventory=self.inventory)
         self.dynamic_inventory()
 
@@ -37,7 +37,7 @@ class MyInventory:
 
         # if group variables exists, add them to group
         if groupvars:
-            for key, value in groupvars.iteritems():
+            for key, value in groupvars.items():
                 my_group.set_variable(key, value)
 
         # add hosts to group
@@ -45,10 +45,10 @@ class MyInventory:
             # set connection variables
             hostname = host.get("hostname")
             hostip = host.get('ip', hostname)
-            hostport = host.get("port")
-            user = host.get("user")
+            hostport = host.get("port", 22)
+            user = host.get("user", 'root')
             password = host.get("password")
-            ssh_key = host.get("ssh_key")
+            ssh_key = host.get("ssh_key", '')
             my_host = Host(name=hostname, port=hostport)
             self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_host', value=hostip)
             self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_pass', value=password)
@@ -56,8 +56,8 @@ class MyInventory:
             self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_user', value=user)
             self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_private_key_file', value=ssh_key)
             # set other variables
-            for key, value in host.iteritems():
-                if key not in ["hostname", "port", "username", "password"]:
+            for key, value in host.items():
+                if key not in ["hostname", "port", "user", "password"]:
                     self.variable_manager.set_host_variable(host=my_host, varname=key, value=value)
 
             # add to group
@@ -67,11 +67,29 @@ class MyInventory:
         """
             add hosts to inventory.
         """
+
+        # resource = [{"hostname": "192.168.8.119"}, {"hostname": "192.168.6.43"}, {"hostname": "192.168.1.233"}, ]
         if isinstance(self.resource, list):
             self.add_dynamic_group(self.resource, 'default_group')
+        # resource = {
+        #     "dynamic_host": {
+        #         "hosts": [
+        #             {'user': u'root', 'password': '123456', 'ip': '192.168.1.108', 'hostname': 'nginx01',
+        #              'port': '22'},
+        #             {"hostname": "778da6afsdwf", "ip": "192.168.1.109", "port": "22", "user": "root",
+        #              "password": "123456"},
+        #         ],
+        #         "vars": {
+        #             "var1": "ansible",
+        #             "var2": "saltstack"
+        #         }
+        #     }
+        # }
         elif isinstance(self.resource, dict):
-            for groupname, hosts_and_vars in self.resource.iteritems():
+            for groupname, hosts_and_vars in self.resource.items():
                 self.add_dynamic_group(hosts_and_vars.get("hosts"), groupname, hosts_and_vars.get("vars"))
+        elif isinstance(self.resource, str):
+            return
 
 
 class ModelResultsCollector(CallbackBase):
@@ -144,21 +162,25 @@ class ANSRunner:
 
     def __initialize_data(self):
         """ 初始化ansible """
-        user = self.resource['user', 'root']
-        conn_password = self.resource['conn_password']
-        # become_password = self.resource['become_password']
+        # user = "root"
+        # if not isinstance(self.resource, str):
+        #     user = self.resource.get("user", "root")
+        # conn_password = self.resource.get('password', '')
+        # become_password = self.resource.get('become_pass', '')
+        file = "%s/conf/.ssh/id_rsa" % settings.BASE_DIR
         context.CLIARGS = ImmutableDict(listtags=False, listtasks=False,
                                         listhosts=False, syntax=False,
                                         connection="ssh", module_path=None,
-                                        forks=100, private_key_file=None,
+                                        forks=100, private_key_file=file,
                                         ssh_common_args=None, ssh_extra_args=None,
                                         sftp_extra_args=None, scp_extra_args=None,
                                         become=False, become_method=None,
                                         become_user=None, start_at_task=None,
                                         verbosity=0, check=False,
-                                        remote_user=user)
+                                        remote_user='root')
         self.loader = DataLoader()
-        self.passwords = dict(conn_pass=conn_password)
+        self.passwords = dict()
+        # self.passwords = dict(conn_pass=conn_password, become_password=become_password)
         my_inventory = MyInventory(self.resource)
         self.inventory = my_inventory.inventory
         self.variable_manager = my_inventory.variable_manager

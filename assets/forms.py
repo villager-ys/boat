@@ -12,16 +12,14 @@ class AssetsForm(forms.Form):
     password = forms.CharField(label='password', widget=forms.PasswordInput(
         attrs={'class': 'form-control', 'placeholder': '请输入ssh连接密码'}))
 
-    def clean_group_hosts(self):
+    def clean_hosts(self):
         hosts = self.cleaned_data['hosts']
         host_list = hosts.split(',')
         for host in host_list:
-            have_symbol = re.match('[^a-z0-9.-]+', host)
-            wrong_ip = re.match('^0.|^255.', host)
-            if have_symbol:
+            have_symbol = re.match(r'((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})(\.((2(5[0-5]|[0-4]\d))|[0-1]?\d{1,2})){3}',
+                                   host)
+            if have_symbol is None:
                 raise forms.ValidationError('Host must contain only numbers, or the domain name separated by "."')
-            elif wrong_ip:
-                raise forms.ValidationError('Wrong IP address')
         return hosts
 
     def clean_port(self):

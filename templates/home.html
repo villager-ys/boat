@@ -14,6 +14,7 @@
     <div class="container">
         <div class="row">
             <div class="col-xs-12　col-sm-8　col-md-9 col-lg-9">
+
                 <div class="panel-heading">
                     <h3>Groups</h3>
                 </div>
@@ -32,7 +33,7 @@
                                 <td>{{ key }}</td>
                                 <td>{{ value }}</td>
                                 <td>
-                                    <a href="{% url 'asset_detail' key %}" >查看详情</a>
+                                    <a href="{% url 'asset_detail' key %}">查看详情</a>
                                     <a href="{% url 'asset' key %}" style="margin-left: 2em;">添加host</a>
                                 </td>
                             </tr>
