@@ -43,18 +43,26 @@ class MyInventory:
         # add hosts to group
         for host in hosts:
             # set connection variables
-            hostname = host.get("hostname")
-            hostip = host.get('ip', hostname)
+            hostname = host.get("hostname", None)
+            hostip = host.get('ip', None)
+            if hostip is None:
+                print("IP地址为空，跳过该元素。")
+                continue
             hostport = host.get("port", 22)
             user = host.get("user", 'root')
-            password = host.get("password")
-            ssh_key = host.get("ssh_key", '')
+            password = host.get("password", None)
+            ssh_key = host.get("ssh_key", None)
+            if hostname is None:
+                hostname = hostip
             my_host = Host(name=hostname, port=hostport)
-            self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_host', value=hostip)
-            self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_pass', value=password)
             self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_port', value=hostport)
+            self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_host', value=hostip)
             self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_user', value=user)
-            self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_private_key_file', value=ssh_key)
+            if password:
+                self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_pass', value=password)
+            if ssh_key:
+                self.variable_manager.set_host_variable(host=my_host, varname='ansible_ssh_private_key_file',
+                                                        value=ssh_key)
             # set other variables
             for key, value in host.items():
                 if key not in ["hostname", "port", "user", "password"]:
@@ -67,29 +75,29 @@ class MyInventory:
         """
             add hosts to inventory.
         """
-
-        # resource = [{"hostname": "192.168.8.119"}, {"hostname": "192.168.6.43"}, {"hostname": "192.168.1.233"}, ]
         if isinstance(self.resource, list):
             self.add_dynamic_group(self.resource, 'default_group')
-        # resource = {
-        #     "dynamic_host": {
-        #         "hosts": [
-        #             {'user': u'root', 'password': '123456', 'ip': '192.168.1.108', 'hostname': 'nginx01',
-        #              'port': '22'},
-        #             {"hostname": "778da6afsdwf", "ip": "192.168.1.109", "port": "22", "user": "root",
-        #              "password": "123456"},
-        #         ],
-        #         "vars": {
-        #             "var1": "ansible",
-        #             "var2": "saltstack"
-        #         }
-        #     }
-        # }
         elif isinstance(self.resource, dict):
             for groupname, hosts_and_vars in self.resource.items():
                 self.add_dynamic_group(hosts_and_vars.get("hosts"), groupname, hosts_and_vars.get("vars"))
         elif isinstance(self.resource, str):
             return
+
+    @property
+    def INVENTORY(self):
+        """
+        返回资产实例
+        :return:
+        """
+        return self.inventory
+
+    @property
+    def VARIABLE_MANAGER(self):
+        """
+        返回变量管理器实例
+        :return:
+        """
+        return self.variable_manager
 
 
 class ModelResultsCollector(CallbackBase):
@@ -162,11 +170,6 @@ class ANSRunner:
 
     def __initialize_data(self):
         """ 初始化ansible """
-        # user = "root"
-        # if not isinstance(self.resource, str):
-        #     user = self.resource.get("user", "root")
-        # conn_password = self.resource.get('password', '')
-        # become_password = self.resource.get('become_pass', '')
         file = "%s/conf/.ssh/id_rsa" % settings.BASE_DIR
         context.CLIARGS = ImmutableDict(listtags=False, listtasks=False,
                                         listhosts=False, syntax=False,

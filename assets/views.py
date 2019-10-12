@@ -1,3 +1,5 @@
+import os
+from django.conf import settings
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.contrib import messages
@@ -17,9 +19,12 @@ def assets(request, group_id):
             user = asset_form.cleaned_data['user']
             password = asset_form.cleaned_data['password']
             host_list = hosts.split(',')
+            # 写入hosts文件
+            with open("%s/conf/inventorys/hosts" % settings.BASE_DIR, 'w+') as f:
+                lines = f.readlines()
             for host in host_list:
                 # 做免密处理,判断免密是否成功，不成功
-                result = ssh_authentication(host, port, user, password)
+                result = ssh_authentication(host, port, user, password, group_by_id(group_id))
                 if result is None:
                     inventory = Inventory()
                     inventory.host = host
@@ -28,7 +33,6 @@ def assets(request, group_id):
                     inventory.user = user
                     inventory.group = group_id
                     inventory.save()
-                    return redirect(reverse('home'))
                 else:
                     messages.error(request, result)
     else:

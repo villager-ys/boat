@@ -5,7 +5,7 @@ from django.conf import settings
 from taskDo.utils.ansiable_api import ANSRunner
 
 
-def ssh_authentication(server_ip, port, user, password):
+def ssh_authentication(server_ip, port, user, password, groupname):
     dir_name = settings.BASE_DIR + "/conf"
     # 先测试一下连通性
     if os.system("ping %s -c 3 >>/dev/null" % server_ip):
@@ -20,10 +20,10 @@ def ssh_authentication(server_ip, port, user, password):
         if result(ans_runner) == -1:
             return "本机密钥对生成失败"
     resources = {
-        "default_group": {
+        groupname: {
             "hosts": [
-                {'user': 'root', 'password': 'root123', 'ip': '192.168.10.99', 'hostname': '192.168.10.99',
-                 'port': '22'},
+                {'user': user, 'password': password, 'ip': server_ip, 'hostname': server_ip,
+                 'port': port},
             ],
             "vars": {}
         }
