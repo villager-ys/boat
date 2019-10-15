@@ -1,7 +1,5 @@
-import os
 from django.conf import settings
-from django.shortcuts import render, redirect
-from django.urls import reverse
+from django.shortcuts import render
 from django.contrib import messages
 from .models import Inventory
 from .forms import AssetsForm

@@ -1,0 +1,20 @@
+div.playbook:not(:last-child){
+    margin-bottom: 2em;
+    padding-bottom: 1em;
+    border-bottom: 1px solid #eee;
+}
+div.playbook h3 {
+    margin-top: 0.5em;
+}
+
+ul.playbook-info-description {
+    list-style-type: none;
+    margin-bottom: 1em;
+}
+ul.playbook-info-description li{
+    display: inline-block;
+    margin-right: 2em;
+}
+div.playbook p.playbook-info {
+    margin-top: 0;
+}

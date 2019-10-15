@@ -1,0 +1,11 @@
+---
+- hosts: worker
+  gather_facts: False
+  tasks:
+    - name: test ping
+      ping:
+    - name: shell commond
+      shell: echo "hello world"
+      register: result
+    - name: show debug info
+      debug: var=result.stdout verbosity=0

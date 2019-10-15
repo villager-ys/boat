@@ -1,0 +1,108 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+{% block header_extends %}
+    <link rel="stylesheet" href="{% static 'playbook.css' %}">
+{% endblock %}
+{# 页面标题 #}
+{% block title %}
+    ansible|playbook
+{% endblock %}
+
+{# 页面内容 #}
+{% block content %}
+    <div class="container">
+        <div class="row">
+            <div class="col-xs-12　col-sm-8　col-md-9 col-lg-9">
+                <div class="panel-heading">
+                    {% block playbook_list_title %}playbook列表{% endblock %}
+                </div>
+                <div class="panel-body">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th>playbookId</th>
+                            <th>playbookName</th>
+                            <th>playbookDesc</th>
+                            <th>createTime</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        {% for playbook in playbooks %}
+                            <div class="playbook">
+                                <tr>
+                                    <td>
+                                        {{ playbook.pk }}
+                                    </td>
+                                    <td>
+                                        {{ playbook.playbook_name }}
+                                    </td>
+                                    <td>
+
+                                        {{ playbook.playbook_description }}
+                                    </td>
+                                    <td>
+                                        <p class="playbook-info">
+                                            <span>创建时间：</span>{{ playbook.create_time|date:"Y-m-d" }}
+                                        </p>
+                                    </td>
+                                    <td>
+                                        <a href="/media/{{ playbook.playbook_content }}">查看详情</a>
+                                        <a href='{% url "playbook_do" playbook.pk %}' style="margin-left: 2em;">执行</a>
+                                    </td>
+                                </tr>
+                            </div>
+                        {% empty %}
+                            <p>暂无playbook，请先
+                                <a href="{% url "playbook_form" %}">添加</a>
+                            </p>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                    <ul class="pagination">
+                        <li class="page-item">
+                            {% if playbooks.has_previous %}
+                                <a class="page-link" href="?page={{ playbooks.previous_page_number }}">&laquo;</a>
+                            {% else %}
+                                <a class="page-link">&laquo;</a>
+                            {% endif %}
+                        </li>
+                        {% for page_num in page_size %}
+                            {% if page_num == playbooks.number %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                                </li>
+                            {% elif page_num != '...' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_num }}">{{ page_num }}</a>
+                                </li>
+                            {% elif page_num == '...' %}
+                                <li class="page-item">
+                                    <a class="page-link">{{ page_num }}</a>
+                                </li>
+                            {% endif %}
+                        {% empty %}
+                        {% endfor %}
+                        <li class="page-item">
+                            {% if playbooks.has_next %}
+                                <a class="page-link" href="?page={{ playbooks.next_page_number }}">&raquo;</a>
+                            {% else %}
+                                <a class="page-link">&raquo;</a>
+                            {% endif %}
+                        </li>
+                    </ul>
+                    <p>
+                        一共有{{ playbooks.paginator.count }}个playbook,当前第{{ playbooks.number }}页,共{{ page_size }}页</p>
+                </div>
+            </div>
+            <div class="hidden-xs col-sm-4 col-md-3 col-lg-3">
+                <div class="panel panel-default">
+                    <div class="panel-heading"></div>
+                    <div class="panel-body">
+                        <a href="{% url "playbook_form" %}">新增playbook</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
